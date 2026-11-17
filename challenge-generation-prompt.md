@@ -25,8 +25,10 @@ these fields:
   `(input..., expected_output)` tuples, and print the inputs, expected
   output, and actual result before each assert. If the function should
   raise an exception for some inputs (e.g. a `ValueError`), cover that in a
-  separate test using `pytest.raises`. It may only rely on `pytest`, the
-  Python standard library, and `main`.
+  separate test using `pytest.raises`. If the function prints to standard
+  output, capture it with the `capsys` fixture and assert on the captured
+  text. It may only rely on `pytest`, the Python standard library, and
+  `main`.
 - `solution_code` (string): a complete, correct implementation with the same
   signature. It must be a drop-in replacement: copying its contents over
   `main.py` must make every test in `test_code` pass.
