@@ -1,0 +1,11 @@
+{
+  "description": "Implement a function that validates and returns a transaction amount. An amount of zero or greater is returned unchanged. A negative amount must raise a ValueError.",
+  "starter_code": "def set_transaction_amount(amount: int) -> int:\n    pass\n",
+  "test_code": "import pytest\nfrom main import set_transaction_amount\n\ntest_cases = [\n    (0, 0),\n    (100, 100),\n    (9999, 9999),\n]\n\n@pytest.mark.parametrize(\n    (\"input1\", \"expected_output\"), test_cases\n)\ndef test_set_transaction_amount(input1, expected_output):\n    print(\"\\n---------------------------------\")\n    print(f\"Inputs: {input1}\")\n    result = set_transaction_amount(input1)\n    print(f\"Expected: {expected_output}\")\n    print(f\"Actual:   {result}\")\n    assert result == expected_output\n\n\ndef test_set_transaction_amount_negative_raises_value_error():\n    print(\"\\n---------------------------------\")\n    print(f\"Inputs: -1\")\n    with pytest.raises(ValueError):\n        set_transaction_amount(-1)\n    print(f\"Expected: ValueError\")\n    print(f\"Actual:   ValueError\")\n",
+  "solution_code": "def set_transaction_amount(amount: int) -> int:\n    if amount < 0:\n        raise ValueError(\"amount must be non-negative\")\n    return amount\n",
+  "tags": [
+    "exceptions",
+    "validation",
+    "edge-cases"
+  ]
+}

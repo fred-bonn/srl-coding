@@ -1,0 +1,11 @@
+{
+  "description": "Implement a function that takes a list of transaction amounts and returns two values from a single return statement: the smallest and the largest amount.",
+  "starter_code": "def get_transaction_range(amounts: list[int]) -> tuple[int, int]:\n    pass\n",
+  "test_code": "import pytest\nfrom main import get_transaction_range\n\ntest_cases = [\n    ([1200, 4500, 900, 3300], (900, 4500)),\n    ([2500], (2500, 2500)),\n    ([99, 100, 101], (99, 101)),\n    ([5000, 1000, 3000, 4000], (1000, 5000)),\n]\n\n@pytest.mark.parametrize(\n    (\"input1\", \"expected_output\"), test_cases\n)\ndef test_get_transaction_range(input1, expected_output):\n    print(\"\\n---------------------------------\")\n    print(f\"Inputs: {input1}\")\n    result = get_transaction_range(input1)\n    print(f\"Expected: {expected_output}\")\n    print(f\"Actual:   {result}\")\n    assert result == expected_output\n",
+  "solution_code": "def get_transaction_range(amounts: list[int]) -> tuple[int, int]:\n    return min(amounts), max(amounts)\n",
+  "tags": [
+    "tuples",
+    "multiple-return-values",
+    "builtins"
+  ]
+}
