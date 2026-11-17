@@ -11,28 +11,36 @@ import (
 
 const createChallenge = `-- name: CreateChallenge :one
 INSERT INTO challenges (
+    description,
     start_code,
     test_code,
     solution_code
 ) VALUES (
-    $1, $2, $3
+    $1, $2, $3, $4
 )
-RETURNING id, created_at, updated_at, start_code, test_code, solution_code
+RETURNING id, created_at, updated_at, description, start_code, test_code, solution_code
 `
 
 type CreateChallengeParams struct {
+	Description  string
 	StartCode    string
 	TestCode     string
 	SolutionCode string
 }
 
 func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams) (Challenge, error) {
-	row := q.db.QueryRowContext(ctx, createChallenge, arg.StartCode, arg.TestCode, arg.SolutionCode)
+	row := q.db.QueryRowContext(ctx, createChallenge,
+		arg.Description,
+		arg.StartCode,
+		arg.TestCode,
+		arg.SolutionCode,
+	)
 	var i Challenge
 	err := row.Scan(
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Description,
 		&i.StartCode,
 		&i.TestCode,
 		&i.SolutionCode,
