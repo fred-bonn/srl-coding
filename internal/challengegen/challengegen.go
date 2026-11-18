@@ -2,9 +2,6 @@ package challengegen
 
 import (
 	"context"
-	"embed"
-	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -28,36 +25,4 @@ func (c Challenge) valid() bool {
 
 type Generator interface {
 	GenerateChallenge(ctx context.Context, tag string) (Challenge, error)
-}
-
-//go:embed prompt.md
-var promptTemplate string
-
-//go:embed samples/*.json
-var samplesFS embed.FS
-
-func buildPrompt(tag string) (string, error) {
-	_, template, ok := strings.Cut(promptTemplate, "\n---\n")
-	if !ok {
-		return "", errors.New("prompt.md is missing the --- separator before the template")
-	}
-
-	var b strings.Builder
-	b.WriteString(strings.Replace(template, "{TOPIC}", tag, 1))
-	b.WriteString("\n\nExample outputs:\n")
-
-	entries, err := samplesFS.ReadDir("samples")
-	if err != nil {
-		return "", fmt.Errorf("reading samples: %w", err)
-	}
-	for _, entry := range entries {
-		sample, err := samplesFS.ReadFile("samples/" + entry.Name())
-		if err != nil {
-			return "", fmt.Errorf("reading sample %s: %w", entry.Name(), err)
-		}
-		b.WriteString("\n")
-		b.Write(sample)
-		b.WriteString("\n")
-	}
-	return b.String(), nil
 }
