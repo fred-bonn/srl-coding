@@ -14,11 +14,12 @@ INSERT INTO challenges (
     description,
     start_code,
     test_code,
-    solution_code
+    solution_code,
+    difficulty
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3, $4, $5
 )
-RETURNING id, created_at, updated_at, description, start_code, test_code, solution_code
+RETURNING id, created_at, updated_at, description, start_code, test_code, solution_code, difficulty
 `
 
 type CreateChallengeParams struct {
@@ -26,6 +27,7 @@ type CreateChallengeParams struct {
 	StartCode    string
 	TestCode     string
 	SolutionCode string
+	Difficulty   int32
 }
 
 func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams) (Challenge, error) {
@@ -34,6 +36,7 @@ func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams
 		arg.StartCode,
 		arg.TestCode,
 		arg.SolutionCode,
+		arg.Difficulty,
 	)
 	var i Challenge
 	err := row.Scan(
@@ -44,6 +47,7 @@ func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams
 		&i.StartCode,
 		&i.TestCode,
 		&i.SolutionCode,
+		&i.Difficulty,
 	)
 	return i, err
 }

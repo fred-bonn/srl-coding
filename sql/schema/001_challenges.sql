@@ -6,7 +6,8 @@ CREATE TABLE challenges (
     description TEXT NOT NULL,
     start_code TEXT NOT NULL,
     test_code TEXT NOT NULL,
-    solution_code TEXT NOT NULL
+    solution_code TEXT NOT NULL,
+    difficulty INT NOT NULL CHECK (difficulty BETWEEN 1 AND 10)
 );
 
 -- +goose Down

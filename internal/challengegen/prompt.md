@@ -30,6 +30,8 @@ of the example outputs:
   signatures match `starter_code` exactly. It must be a drop-in replacement
   for `main.py` that makes every test pass, and `test_code` must never
   import from or reference it.
+- `difficulty` (integer): how hard the challenge is for a beginner-to-
+  intermediate learner, from 1 (easiest) to 10 (hardest).
 - `tags` (list of strings): short, lowercase topic tags.
 
 Output raw JSON only - no markdown fences, no commentary.

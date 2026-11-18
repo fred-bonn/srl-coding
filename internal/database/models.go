@@ -18,4 +18,5 @@ type Challenge struct {
 	StartCode    string
 	TestCode     string
 	SolutionCode string
+	Difficulty   int32
 }
