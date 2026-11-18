@@ -2,6 +2,7 @@ package challengegen
 
 import (
 	"context"
+	"embed"
 	"errors"
 	"fmt"
 	"strings"
@@ -28,6 +29,12 @@ func (c Challenge) valid() bool {
 type Generator interface {
 	GenerateChallenge(ctx context.Context, tag string) (Challenge, error)
 }
+
+//go:embed prompt.md
+var promptTemplate string
+
+//go:embed samples/*.json
+var samplesFS embed.FS
 
 func buildPrompt(tag string) (string, error) {
 	_, template, ok := strings.Cut(promptTemplate, "\n---\n")
