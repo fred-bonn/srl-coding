@@ -1,5 +1,6 @@
 ## Style guide
 
+- Keep comments minimal; the code should be able to speak for itself.
 - Keep things in one function unless composable or reusable.
 - Do not extract single-use helpers preemptively. Inline the logic at the call site unless the helper is reused, hides a genuinely complex boundary, or has a clear independent name that improves the caller.
 - Keep everything unexported by default. Only export when needed, and keep the number of entrypoints to packages minimal.
