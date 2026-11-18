@@ -2,7 +2,6 @@ package challengegen
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -16,12 +15,12 @@ type Challenge struct {
 	Tags         []string `json:"tags"`
 }
 
-func (c Challenge) Format() (string, error) {
-	b, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("formatting challenge: %w", err)
-	}
-	return string(b), nil
+func (c Challenge) valid() bool {
+	return strings.TrimSpace(c.Description) != "" &&
+		strings.TrimSpace(c.StartCode) != "" &&
+		strings.TrimSpace(c.TestCode) != "" &&
+		strings.TrimSpace(c.SolutionCode) != "" &&
+		len(c.Tags) > 0
 }
 
 type Generator interface {

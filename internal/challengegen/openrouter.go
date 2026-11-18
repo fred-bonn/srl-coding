@@ -90,14 +90,6 @@ func stripJSONFences(s string) string {
 	return strings.TrimSuffix(strings.TrimSpace(s), "```")
 }
 
-func (c Challenge) valid() bool {
-	return strings.TrimSpace(c.Description) != "" &&
-		strings.TrimSpace(c.StartCode) != "" &&
-		strings.TrimSpace(c.TestCode) != "" &&
-		strings.TrimSpace(c.SolutionCode) != "" &&
-		len(c.Tags) > 0
-}
-
 type chatMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
