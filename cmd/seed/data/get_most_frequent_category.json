@@ -1,0 +1,12 @@
+{
+  "description": "Implement a function that takes a dict mapping category names to transaction counts and returns the category with the highest count. If the dict is empty, return None. If two categories have the same count, return the first one found.",
+  "starter_code": "def get_most_frequent_category(transactions: dict[str, int]) -> str | None:\n    pass\n",
+  "test_code": "import pytest\nfrom main import get_most_frequent_category\n\ntest_cases = [\n    ({\"groceries\": 3, \"electronics\": 1}, \"groceries\"),\n    ({\"groceries\": 1, \"electronics\": 3}, \"electronics\"),\n]\n\nvalidation_cases = [\n    pytest.param({}, None, marks=pytest.mark.validate),\n    pytest.param({\"groceries\": 2, \"electronics\": 2}, \"groceries\", marks=pytest.mark.validate),\n]\n\n@pytest.mark.parametrize(\n    (\"input1\", \"expected_output\"), test_cases + validation_cases\n)\ndef test_get_most_frequent_category(input1, expected_output):\n    print(\"\\n---------------------------------\")\n    print(f\"Inputs: {input1}\")\n    result = get_most_frequent_category(input1)\n    print(f\"Expected: {expected_output}\")\n    print(f\"Actual:   {result}\")\n    assert result == expected_output\n",
+  "solution_code": "def get_most_frequent_category(transactions: dict[str, int]) -> str | None:\n    best_category = None\n    best_count = None\n    for category, count in transactions.items():\n        if best_count is None or count > best_count:\n            best_category = category\n            best_count = count\n    return best_category\n",
+  "difficulty": 4,
+  "tags": [
+    "dictionaries",
+    "iteration",
+    "edge-cases"
+  ]
+}
