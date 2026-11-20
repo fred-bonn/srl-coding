@@ -10,6 +10,8 @@ import (
 
 type Querier interface {
 	CreateChallenge(ctx context.Context, arg CreateChallengeParams) (Challenge, error)
+	CreateChallengeTopic(ctx context.Context, arg CreateChallengeTopicParams) error
+	CreateTopic(ctx context.Context, name string) (Topic, error)
 }
 
 var _ Querier = (*Queries)(nil)

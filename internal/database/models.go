@@ -20,3 +20,15 @@ type Challenge struct {
 	SolutionCode string
 	Difficulty   int32
 }
+
+type ChallengeTopic struct {
+	ChallengeID uuid.UUID
+	TopicID     uuid.UUID
+}
+
+type Topic struct {
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Name      string
+}

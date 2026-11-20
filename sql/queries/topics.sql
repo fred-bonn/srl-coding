@@ -1,0 +1,7 @@
+-- name: CreateTopic :one
+INSERT INTO topics (name) VALUES ($1)
+ON CONFLICT (name) DO UPDATE SET name = excluded.name
+RETURNING *;
+
+-- name: CreateChallengeTopic :exec
+INSERT INTO challenge_topics (challenge_id, topic_id) VALUES ($1, $2);
