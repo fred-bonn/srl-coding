@@ -7,6 +7,11 @@ outputs in the `samples/` directory alongside them as few-shot samples.
 
 Generate a Python coding challenge about: **{TOPIC}**
 
+The example outputs demonstrate format, structure, and style only. Produce a
+challenge clearly distinct from every example: different function and class
+names, a different scenario and domain, and different edge cases. Never reuse
+an example's names, input data, or story.
+
 Respond with a single JSON object and nothing else, following the structure
 of the example outputs:
 
@@ -32,6 +37,6 @@ of the example outputs:
   import from or reference it.
 - `difficulty` (integer): how hard the challenge is for a beginner-to-
   intermediate learner, from 1 (easiest) to 10 (hardest).
-- `tags` (list of strings): short, lowercase topic tags.
+- `topics` (list of strings): short, lowercase topic names.
 
 Output raw JSON only - no markdown fences, no commentary.

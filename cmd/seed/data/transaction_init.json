@@ -4,7 +4,7 @@
   "test_code": "import pytest\nfrom main import Transaction\n\ntest_cases = [\n    (\"tx_001\", 100),\n    (\"tx_099\", 250),\n]\n\nvalidation_cases = [\n    pytest.param(\"tx_003\", 4550, marks=pytest.mark.validate),\n    pytest.param(\"tx_002\", 0, marks=pytest.mark.validate),\n]\n\n@pytest.mark.parametrize(\n    (\"input1\", \"input2\"), test_cases + validation_cases\n)\ndef test_transaction_init(input1, input2):\n    print(\"\\n---------------------------------\")\n    print(f\"Inputs: {input1}, {input2}\")\n    transaction = Transaction(input1, input2)\n    print(f\"Expected: transaction_id={input1}, amount={input2}\")\n    print(f\"Actual:   transaction_id={transaction.transaction_id}, amount={transaction.amount}\")\n    assert transaction.transaction_id == input1\n    assert transaction.amount == input2\n",
   "solution_code": "class Transaction:\n    def __init__(self, transaction_id: str, amount: int):\n        self.transaction_id = transaction_id\n        self.amount = amount\n",
   "difficulty": 2,
-  "tags": [
+  "topics": [
     "oop",
     "constructors",
     "instance-attributes"

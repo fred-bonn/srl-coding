@@ -11,7 +11,7 @@ type Challenge struct {
 	TestCode     string   `json:"test_code"`
 	SolutionCode string   `json:"solution_code"`
 	Difficulty   int      `json:"difficulty"`
-	Tags         []string `json:"tags"`
+	Topics       []string `json:"topics"`
 }
 
 func (c Challenge) valid() bool {
@@ -20,9 +20,9 @@ func (c Challenge) valid() bool {
 		strings.TrimSpace(c.TestCode) != "" &&
 		strings.TrimSpace(c.SolutionCode) != "" &&
 		c.Difficulty >= 1 && c.Difficulty <= 10 &&
-		len(c.Tags) > 0
+		len(c.Topics) > 0
 }
 
 type Generator interface {
-	GenerateChallenge(ctx context.Context, tag string) (Challenge, error)
+	GenerateChallenge(ctx context.Context, topic string) (Challenge, error)
 }

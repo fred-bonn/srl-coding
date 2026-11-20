@@ -4,7 +4,7 @@
   "test_code": "import pytest\nfrom main import update_account_balance\n\ntest_cases = [\n    (0, 100, 100),\n    (100, 200, 300),\n]\n\nvalidation_cases = [\n    pytest.param(0, 0, 0, marks=pytest.mark.validate),\n    pytest.param(4500, 50, 4550, marks=pytest.mark.validate),\n]\n\n@pytest.mark.parametrize(\n    (\"input1\", \"input2\", \"expected_output\"), test_cases + validation_cases\n)\ndef test_update_account_balance(input1, input2, expected_output):\n    print(\"\\n---------------------------------\")\n    print(f\"Inputs: {input1}, {input2}\")\n    result = update_account_balance(input1, input2)\n    print(f\"Expected: {expected_output}\")\n    print(f\"Actual:   {result}\")\n    assert result == expected_output\n",
   "solution_code": "def update_account_balance(current_balance: int, deposit: int) -> int:\n    return current_balance + deposit\n",
   "difficulty": 1,
-  "tags": [
+  "topics": [
     "arithmetic",
     "functions"
   ]

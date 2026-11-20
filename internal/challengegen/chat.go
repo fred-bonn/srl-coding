@@ -18,8 +18,8 @@ type chatGenerator struct {
 	apiKey string
 }
 
-func (g chatGenerator) GenerateChallenge(ctx context.Context, tag string) (Challenge, error) {
-	prompt, err := buildPrompt(tag)
+func (g chatGenerator) GenerateChallenge(ctx context.Context, topic string) (Challenge, error) {
+	prompt, err := buildPrompt(topic)
 	if err != nil {
 		return Challenge{}, err
 	}
@@ -57,7 +57,7 @@ func (g chatGenerator) GenerateChallenge(ctx context.Context, tag string) (Chall
 		return Challenge{}, fmt.Errorf("parsing generated challenge: %w", err)
 	}
 	if !challenge.valid() {
-		return Challenge{}, errors.New("generated challenge is incomplete: every field must be non-empty and tags must have at least one entry")
+		return Challenge{}, errors.New("generated challenge is incomplete: every field must be non-empty and topics must have at least one entry")
 	}
 	return challenge, nil
 }
@@ -68,14 +68,14 @@ var promptTemplate string
 //go:embed samples/*.json
 var samplesFS embed.FS
 
-func buildPrompt(tag string) (string, error) {
+func buildPrompt(topic string) (string, error) {
 	_, template, ok := strings.Cut(promptTemplate, "\n---\n")
 	if !ok {
 		return "", errors.New("prompt.md is missing the --- separator before the template")
 	}
 
 	var b strings.Builder
-	b.WriteString(strings.Replace(template, "{TOPIC}", tag, 1))
+	b.WriteString(strings.Replace(template, "{TOPIC}", topic, 1))
 	b.WriteString("\n\nExample outputs:\n")
 
 	entries, err := samplesFS.ReadDir("samples")

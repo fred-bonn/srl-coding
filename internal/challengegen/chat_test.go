@@ -37,8 +37,8 @@ func TestStripJSONFences(t *testing.T) {
 
 func TestBuildPrompt(t *testing.T) {
 	tests := []struct {
-		name string
-		tag  string
+		name  string
+		topic string
 	}{
 		{"single word", "loops"},
 		{"two words", "list comprehensions"},
@@ -46,12 +46,12 @@ func TestBuildPrompt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			prompt, err := buildPrompt(tt.tag)
+			prompt, err := buildPrompt(tt.topic)
 			if err != nil {
 				t.Fatalf("buildPrompt() error: %v", err)
 			}
-			if !strings.Contains(prompt, tt.tag) {
-				t.Errorf("prompt does not contain the tag %q", tt.tag)
+			if !strings.Contains(prompt, tt.topic) {
+				t.Errorf("prompt does not contain the topic %q", tt.topic)
 			}
 			if strings.Contains(prompt, "{TOPIC}") {
 				t.Errorf("prompt still contains the {TOPIC} placeholder")
@@ -120,9 +120,9 @@ func TestGenerateChallenge(t *testing.T) {
 		TestCode:     "assert reverse([1, 2]) == [2, 1]",
 		SolutionCode: "def reverse(xs):\n    return xs[::-1]",
 		Difficulty:   5,
-		Tags:         []string{"lists"},
+		Topics:       []string{"lists"},
 	}
-	challengeJSON := `{"description":"Reverse a list.","starter_code":"def reverse(xs):\n    pass\n","test_code":"assert reverse([1, 2]) == [2, 1]","solution_code":"def reverse(xs):\n    return xs[::-1]","difficulty":5,"tags":["lists"]}`
+	challengeJSON := `{"description":"Reverse a list.","starter_code":"def reverse(xs):\n    pass\n","test_code":"assert reverse([1, 2]) == [2, 1]","solution_code":"def reverse(xs):\n    return xs[::-1]","difficulty":5,"topics":["lists"]}`
 
 	tests := []struct {
 		name    string
@@ -184,7 +184,7 @@ func TestGenerateChallenge(t *testing.T) {
 				t.Errorf("request messages = %+v, want a single user message", req.Messages)
 			}
 			if !strings.Contains(req.Messages[0].Content, "loops") {
-				t.Errorf("prompt does not contain the tag")
+				t.Errorf("prompt does not contain the topic")
 			}
 		})
 	}

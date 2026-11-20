@@ -9,7 +9,7 @@ func TestChallengeValid(t *testing.T) {
 		TestCode:     "assert reverse([1, 2]) == [2, 1]\n",
 		SolutionCode: "def reverse(xs):\n    return xs[::-1]\n",
 		Difficulty:   5,
-		Tags:         []string{"lists"},
+		Topics:       []string{"lists"},
 	}
 
 	tests := []struct {
@@ -26,7 +26,7 @@ func TestChallengeValid(t *testing.T) {
 		{"blank start code", func(c *Challenge) { c.StartCode = "   " }, false},
 		{"blank test code", func(c *Challenge) { c.TestCode = "   " }, false},
 		{"blank solution code", func(c *Challenge) { c.SolutionCode = "" }, false},
-		{"no tags", func(c *Challenge) { c.Tags = nil }, false},
+		{"no topics", func(c *Challenge) { c.Topics = nil }, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

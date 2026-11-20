@@ -5,7 +5,7 @@
 ## The idea
 
 A user starts a learning process and is given a coding challenge for a
-topic/tag — for example `"printing"` or `"addition"`.
+topic — for example `"printing"` or `"addition"`.
 
 ## The flow
 
