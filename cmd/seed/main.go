@@ -44,8 +44,8 @@ func seed(db *sql.DB) error {
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, "TRUNCATE TABLE challenges RESTART IDENTITY CASCADE"); err != nil {
-		return fmt.Errorf("truncating challenges: %w", err)
+	if _, err := tx.ExecContext(ctx, "TRUNCATE TABLE challenges, topics, challenge_topics RESTART IDENTITY CASCADE"); err != nil {
+		return fmt.Errorf("truncating tables: %w", err)
 	}
 
 	entries, err := seedFS.ReadDir("data")
@@ -62,7 +62,7 @@ func seed(db *sql.DB) error {
 		if err := json.Unmarshal(content, &challenge); err != nil {
 			return fmt.Errorf("parsing seed file %s: %w", entry.Name(), err)
 		}
-		_, err = q.CreateChallenge(ctx, database.CreateChallengeParams{
+		inserted, err := q.CreateChallenge(ctx, database.CreateChallengeParams{
 			Description:  challenge.Description,
 			StartCode:    challenge.StartCode,
 			TestCode:     challenge.TestCode,
@@ -71,6 +71,18 @@ func seed(db *sql.DB) error {
 		})
 		if err != nil {
 			return fmt.Errorf("inserting seed file %s: %w", entry.Name(), err)
+		}
+		for _, name := range challenge.Topics {
+			topic, err := q.CreateTopic(ctx, name)
+			if err != nil {
+				return fmt.Errorf("inserting topic %s: %w", name, err)
+			}
+			if err := q.CreateChallengeTopic(ctx, database.CreateChallengeTopicParams{
+				ChallengeID: inserted.ID,
+				TopicID:     topic.ID,
+			}); err != nil {
+				return fmt.Errorf("linking challenge %s to topic %s: %w", entry.Name(), name, err)
+			}
 		}
 	}
 	return tx.Commit()
