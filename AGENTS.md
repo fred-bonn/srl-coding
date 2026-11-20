@@ -68,6 +68,21 @@ func requireConfig(input any) {
 }
 ```
 
+## Schema changes and the seed command
+
+- The seed command's data lives in `cmd/seed/data/` — for now a copy of
+  `internal/challengegen/samples/`, expected to become the canonical (and
+  diverging) location later.
+- When adding or altering tables in `sql/schema`, also update
+  `cmd/seed/main.go`: extend the `TRUNCATE` list and add insert logic for new
+  tables/columns, and extend `cmd/seed/data/` if the new columns need seed
+  values.
+- The seed command inserts through the sqlc-generated queries in
+  `internal/database`. Regenerating sqlc after a schema change will break the
+  seed command's compilation if it no longer matches — fix it as part of the
+  same change, not later.
+- Keep truncate + inserts inside one transaction so seeding is all-or-nothing.
+
 ## Commits
 
 - Do not commit unless I tell you to.
