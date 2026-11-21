@@ -63,7 +63,7 @@ func seed(db *sql.DB) error {
 			return fmt.Errorf("parsing seed file %s: %w", entry.Name(), err)
 		}
 		inserted, err := q.CreateChallenge(ctx, database.CreateChallengeParams{
-			Description:  challenge.Description,
+			Assignment:   challenge.Assignment,
 			StartCode:    challenge.StartCode,
 			TestCode:     challenge.TestCode,
 			SolutionCode: challenge.SolutionCode,

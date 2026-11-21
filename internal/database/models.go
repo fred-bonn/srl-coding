@@ -14,7 +14,7 @@ type Challenge struct {
 	ID           uuid.UUID
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-	Description  string
+	Assignment   string
 	StartCode    string
 	TestCode     string
 	SolutionCode string

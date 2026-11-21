@@ -115,14 +115,14 @@ func TestDecodeResponse(t *testing.T) {
 
 func TestGenerateChallenge(t *testing.T) {
 	wantChallenge := Challenge{
-		Description:  "Reverse a list.",
+		Assignment:   "Reverse a list.",
 		StartCode:    "def reverse(xs):\n    pass\n",
 		TestCode:     "assert reverse([1, 2]) == [2, 1]",
 		SolutionCode: "def reverse(xs):\n    return xs[::-1]",
 		Difficulty:   5,
 		Topics:       []string{"lists"},
 	}
-	challengeJSON := `{"description":"Reverse a list.","starter_code":"def reverse(xs):\n    pass\n","test_code":"assert reverse([1, 2]) == [2, 1]","solution_code":"def reverse(xs):\n    return xs[::-1]","difficulty":5,"topics":["lists"]}`
+	challengeJSON := `{"assignment":"Reverse a list.","starter_code":"def reverse(xs):\n    pass\n","test_code":"assert reverse([1, 2]) == [2, 1]","solution_code":"def reverse(xs):\n    return xs[::-1]","difficulty":5,"topics":["lists"]}`
 
 	tests := []struct {
 		name    string
@@ -132,7 +132,7 @@ func TestGenerateChallenge(t *testing.T) {
 	}{
 		{"plain json", completionBody(challengeJSON), wantChallenge, false},
 		{"fenced json", completionBody("```json\n" + challengeJSON + "\n```"), wantChallenge, false},
-		{"incomplete challenge", completionBody(`{"description":"Reverse a list."}`), Challenge{}, true},
+		{"incomplete challenge", completionBody(`{"assignment":"Reverse a list."}`), Challenge{}, true},
 		{"api error", `{"error":{"message":"rate limited"}}`, Challenge{}, true},
 		{"no choices", `{"choices":[]}`, Challenge{}, true},
 		{"empty content", completionBody(""), Challenge{}, true},

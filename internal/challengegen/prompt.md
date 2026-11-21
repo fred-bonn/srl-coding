@@ -15,7 +15,7 @@ an example's names, input data, or story.
 Respond with a single JSON object and nothing else, following the structure
 of the example outputs:
 
-- `description` (string): instructions for the learner. State the required
+- `assignment` (string): instructions for the learner. State the required
   behaviour, including any special return values and edge cases, but do not
   reveal the solution.
 - `starter_code` (string): valid, runnable Python. The functions and

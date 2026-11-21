@@ -4,7 +4,7 @@ import "testing"
 
 func TestChallengeValid(t *testing.T) {
 	valid := Challenge{
-		Description:  "Reverse a list.",
+		Assignment:   "Reverse a list.",
 		StartCode:    "def reverse(xs):\n    pass\n",
 		TestCode:     "assert reverse([1, 2]) == [2, 1]\n",
 		SolutionCode: "def reverse(xs):\n    return xs[::-1]\n",
@@ -22,7 +22,7 @@ func TestChallengeValid(t *testing.T) {
 		{"difficulty upper bound", func(c *Challenge) { c.Difficulty = 10 }, true},
 		{"difficulty zero", func(c *Challenge) { c.Difficulty = 0 }, false},
 		{"difficulty above ten", func(c *Challenge) { c.Difficulty = 11 }, false},
-		{"blank description", func(c *Challenge) { c.Description = "  \n\t" }, false},
+		{"blank assignment", func(c *Challenge) { c.Assignment = "  \n\t" }, false},
 		{"blank start code", func(c *Challenge) { c.StartCode = "   " }, false},
 		{"blank test code", func(c *Challenge) { c.TestCode = "   " }, false},
 		{"blank solution code", func(c *Challenge) { c.SolutionCode = "" }, false},

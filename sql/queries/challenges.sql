@@ -1,6 +1,6 @@
 -- name: CreateChallenge :one
 INSERT INTO challenges (
-    description,
+    assignment,
     start_code,
     test_code,
     solution_code,

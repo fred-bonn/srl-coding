@@ -11,7 +11,7 @@ import (
 
 const createChallenge = `-- name: CreateChallenge :one
 INSERT INTO challenges (
-    description,
+    assignment,
     start_code,
     test_code,
     solution_code,
@@ -19,11 +19,11 @@ INSERT INTO challenges (
 ) VALUES (
     $1, $2, $3, $4, $5
 )
-RETURNING id, created_at, updated_at, description, start_code, test_code, solution_code, difficulty
+RETURNING id, created_at, updated_at, assignment, start_code, test_code, solution_code, difficulty
 `
 
 type CreateChallengeParams struct {
-	Description  string
+	Assignment   string
 	StartCode    string
 	TestCode     string
 	SolutionCode string
@@ -32,7 +32,7 @@ type CreateChallengeParams struct {
 
 func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams) (Challenge, error) {
 	row := q.db.QueryRowContext(ctx, createChallenge,
-		arg.Description,
+		arg.Assignment,
 		arg.StartCode,
 		arg.TestCode,
 		arg.SolutionCode,
@@ -43,7 +43,7 @@ func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams
 		&i.ID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.Description,
+		&i.Assignment,
 		&i.StartCode,
 		&i.TestCode,
 		&i.SolutionCode,

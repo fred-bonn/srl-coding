@@ -6,7 +6,7 @@ import (
 )
 
 type Challenge struct {
-	Description  string   `json:"description"`
+	Assignment   string   `json:"assignment"`
 	StartCode    string   `json:"starter_code"`
 	TestCode     string   `json:"test_code"`
 	SolutionCode string   `json:"solution_code"`
@@ -15,7 +15,7 @@ type Challenge struct {
 }
 
 func (c Challenge) valid() bool {
-	return strings.TrimSpace(c.Description) != "" &&
+	return strings.TrimSpace(c.Assignment) != "" &&
 		strings.TrimSpace(c.StartCode) != "" &&
 		strings.TrimSpace(c.TestCode) != "" &&
 		strings.TrimSpace(c.SolutionCode) != "" &&
