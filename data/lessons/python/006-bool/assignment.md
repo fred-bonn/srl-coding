@@ -1,1 +1,5 @@
-Write a Python program that prints `True`.
+Write a Python program that prints `False`.
+
+Restrictions:
+
+- You may not use strings.

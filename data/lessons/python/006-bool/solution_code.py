@@ -1,2 +1,2 @@
-is_open = True
+is_open = False
 print(is_open)
