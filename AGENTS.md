@@ -75,6 +75,15 @@ func requireConfig(input any) {
   packages; add a named query in `sql/queries/` and regenerate sqlc instead.
 - Tests use an in-memory fake `Querier`, never a live database.
 
+## API docs
+
+- The README is the API reference: every HTTP endpoint is documented
+  there with its input, response, status codes, and a curl example. When
+  adding or changing an endpoint, update its README entry in the same
+  change.
+- Authenticated routes read the user via `auth.UserFromContext`; never
+  parse the session token yourself.
+
 ## Schema changes and the seed command
 
 - The seed command's data lives in `cmd/seed/data/` — for now a copy of
