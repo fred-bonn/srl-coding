@@ -5,10 +5,18 @@
 package database
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+type AuthSession struct {
+	Token     string
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	ExpiresAt time.Time
+}
 
 type Challenge struct {
 	ID           uuid.UUID
@@ -31,4 +39,36 @@ type Topic struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Name      string
+}
+
+type User struct {
+	ID           uuid.UUID
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Email        string
+	PasswordHash string
+}
+
+type UserLesson struct {
+	UserID       uuid.UUID
+	LessonNumber int32
+	CompletedAt  time.Time
+}
+
+type UserReview struct {
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	ChallengeID     uuid.UUID
+	Code            string
+	Correct         sql.NullBool
+	DurationSeconds sql.NullInt32
+	StartedAt       time.Time
+}
+
+type UserTopic struct {
+	UserID    uuid.UUID
+	TopicID   uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DueAt     time.Time
 }

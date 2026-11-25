@@ -9,9 +9,12 @@ import (
 )
 
 type Querier interface {
+	CreateAuthSession(ctx context.Context, arg CreateAuthSessionParams) error
 	CreateChallenge(ctx context.Context, arg CreateChallengeParams) (Challenge, error)
 	CreateChallengeTopic(ctx context.Context, arg CreateChallengeTopicParams) error
 	CreateTopic(ctx context.Context, name string) (Topic, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)
