@@ -1,12 +1,16 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
+
+	"github.com/fred-bonn/srlcode/internal/database"
 )
 
 type credentials struct {
@@ -28,6 +32,32 @@ func (s *Service) Routes() http.Handler {
 	mux.HandleFunc("POST /auth/register", s.handleRegister)
 	mux.HandleFunc("POST /auth/login", s.handleLogin)
 	return mux
+}
+
+type contextKey struct{}
+
+// UserFromContext returns the authenticated user, if any.
+func UserFromContext(ctx context.Context) (database.User, bool) {
+	user, ok := ctx.Value(contextKey{}).(database.User)
+	return user, ok
+}
+
+// Authenticate resolves the Bearer session token to a user and passes the
+// user to downstream handlers via the request context.
+func (s *Service) Authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
+		if token == "" {
+			http.Error(w, "missing session token", http.StatusUnauthorized)
+			return
+		}
+		user, err := s.db.GetUserBySessionToken(r.Context(), token)
+		if err != nil {
+			http.Error(w, "invalid or expired session token", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextKey{}, user)))
+	})
 }
 
 func (s *Service) handleRegister(w http.ResponseWriter, r *http.Request) {

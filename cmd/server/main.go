@@ -6,10 +6,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/fred-bonn/srlcode/internal/auth"
 	"github.com/fred-bonn/srlcode/internal/database"
+	"github.com/fred-bonn/srlcode/internal/learning"
 	"github.com/fred-bonn/srlcode/internal/lessons"
+	"github.com/fred-bonn/srlcode/internal/srs"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -42,8 +47,12 @@ func main() {
 	}
 	log.Printf("synced %d lessons", len(loaded))
 
+	authSvc := auth.New(queries)
+	learningSvc := learning.New(queries, srs.Fixed{}, loaded, testUserPredicate(context.Background(), queries))
+
 	mux := http.NewServeMux()
-	mux.Handle("/auth/", auth.New(queries).Routes())
+	mux.Handle("/auth/", authSvc.Routes())
+	mux.Handle("/", authSvc.Authenticate(learningSvc.Routes()))
 
 	addr := os.Getenv("ADDR")
 	if addr == "" {
@@ -51,4 +60,30 @@ func main() {
 	}
 	log.Printf("listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
+}
+
+// testUserPredicate resolves the TEST_USERS email list at boot; users
+// registered later need a restart to be recognized.
+func testUserPredicate(ctx context.Context, q database.Querier) func(uuid.UUID) bool {
+	testUsers := map[uuid.UUID]struct{}{}
+	for _, email := range strings.Split(os.Getenv("TEST_USERS"), ",") {
+		email = strings.TrimSpace(email)
+		if email == "" {
+			continue
+		}
+		user, err := q.GetUserByEmail(ctx, email)
+		if err != nil {
+			log.Printf("TEST_USERS: unknown email %q, skipping", email)
+			continue
+		}
+		testUsers[user.ID] = struct{}{}
+	}
+	if len(testUsers) == 0 {
+		return func(uuid.UUID) bool { return false }
+	}
+	log.Printf("test users enabled for %d account(s)", len(testUsers))
+	return func(id uuid.UUID) bool {
+		_, ok := testUsers[id]
+		return ok
+	}
 }
