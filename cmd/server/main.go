@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/fred-bonn/srlcode/internal/auth"
+	"github.com/fred-bonn/srlcode/internal/challenge"
+	"github.com/fred-bonn/srlcode/internal/challengegen"
 	"github.com/fred-bonn/srlcode/internal/database"
 	"github.com/fred-bonn/srlcode/internal/learning"
 	"github.com/fred-bonn/srlcode/internal/lessons"
@@ -48,7 +50,8 @@ func main() {
 	log.Printf("synced %d lessons", len(loaded))
 
 	authSvc := auth.New(queries)
-	learningSvc := learning.New(queries, srs.Fixed{}, loaded, testUserPredicate(context.Background(), queries))
+	picker := challenge.NewPicker(queries, newGenerator())
+	learningSvc := learning.New(queries, srs.Fixed{}, picker, loaded, testUserPredicate(context.Background(), queries))
 
 	mux := http.NewServeMux()
 	mux.Handle("/auth/", authSvc.Routes())
@@ -60,6 +63,20 @@ func main() {
 	}
 	log.Printf("listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, mux))
+}
+
+// newGenerator prefers the OpenCode generator, then OpenRouter. With no
+// API key set, reviews reuse existing challenges instead of generating.
+func newGenerator() challengegen.Generator {
+	gen, err := challengegen.NewOpencodeGenerator()
+	if err == nil {
+		return gen
+	}
+	if gen, err = challengegen.NewOpenRouterGenerator(); err == nil {
+		return gen
+	}
+	log.Print("no challenge generator configured; reviews will reuse existing challenges")
+	return nil
 }
 
 // testUserPredicate resolves the TEST_USERS email list at boot; users

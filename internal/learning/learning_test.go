@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/fred-bonn/srlcode/internal/challenge"
+	"github.com/fred-bonn/srlcode/internal/challengegen"
 	"github.com/fred-bonn/srlcode/internal/database"
 	"github.com/fred-bonn/srlcode/internal/lessons"
 	"github.com/fred-bonn/srlcode/internal/srs"
@@ -79,7 +81,7 @@ func newFixture(t *testing.T, isTest bool) *fixture {
 		challengeOf: challengeOf,
 		clock:       time.Date(2026, 11, 25, 10, 0, 0, 0, time.UTC),
 	}
-	f.svc = New(db, srs.Fixed{}, ls, func(id uuid.UUID) bool { return isTest })
+	f.svc = New(db, srs.Fixed{}, challenge.NewPicker(db, nil), ls, func(id uuid.UUID) bool { return isTest })
 	f.svc.now = func() time.Time { return f.clock }
 	return f
 }
@@ -329,5 +331,111 @@ func TestAttemptOwnership(t *testing.T) {
 	err = f.svc.CompleteAttempt(ctx, other.ID, uuid.MustParse(attempt.ID), true, 60)
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("foreign complete = %v, want ErrNotFound", err)
+	}
+}
+
+func TestTopicAttemptIntroUsesLessonChallenge(t *testing.T) {
+	f := newFixture(t, false)
+	f.view(t) // introduces the lesson's topic, like a client would
+	attempt, err := f.svc.StartTopicAttempt(context.Background(), f.user.ID, f.topicIDs[0])
+	if err != nil {
+		t.Fatalf("starting topic attempt: %v", err)
+	}
+	if attempt.ChallengeID != f.challengeOf[f.topicIDs[0]].String() {
+		t.Fatalf("first introduction should serve the lesson's static challenge, got %s", attempt.ChallengeID)
+	}
+}
+
+func TestTopicAttemptResumesOpen(t *testing.T) {
+	f := newFixture(t, false)
+	ctx := context.Background()
+	f.view(t)
+
+	first, err := f.svc.StartTopicAttempt(ctx, f.user.ID, f.topicIDs[0])
+	if err != nil {
+		t.Fatalf("starting topic attempt: %v", err)
+	}
+	if err := f.svc.SaveCode(ctx, f.user.ID, uuid.MustParse(first.ID), "print('wip')"); err != nil {
+		t.Fatalf("saving code: %v", err)
+	}
+
+	resumed, err := f.svc.StartTopicAttempt(ctx, f.user.ID, f.topicIDs[0])
+	if err != nil {
+		t.Fatalf("resuming topic attempt: %v", err)
+	}
+	if resumed.ID != first.ID || resumed.Code != "print('wip')" {
+		t.Fatalf("expected the open attempt with saved code, got %+v", resumed)
+	}
+}
+
+func TestTopicAttemptNotDue(t *testing.T) {
+	f := newFixture(t, false)
+	_, err := f.svc.StartTopicAttempt(context.Background(), f.user.ID, f.topicIDs[2])
+	if !errors.Is(err, ErrNotAssigned) {
+		t.Fatalf("topic not due today = %v, want ErrNotAssigned", err)
+	}
+}
+
+func TestTopicAttemptReusesSeenChallengeWithoutGenerator(t *testing.T) {
+	f := newFixture(t, false)
+	ctx := context.Background()
+	f.doDay(t)
+	f.clock = f.clock.AddDate(0, 0, 1)
+
+	attempt, err := f.svc.StartTopicAttempt(ctx, f.user.ID, f.topicIDs[0])
+	if err != nil {
+		t.Fatalf("starting review attempt: %v", err)
+	}
+	if attempt.ChallengeID != f.challengeOf[f.topicIDs[0]].String() {
+		t.Fatalf("without a generator the seen challenge should be reused, got %s", attempt.ChallengeID)
+	}
+	if attempt.Assignment != "assignment 1" {
+		t.Fatalf("expected a fresh attempt on the reused challenge, got %q", attempt.Assignment)
+	}
+}
+
+type fakeGenerator struct{}
+
+func (fakeGenerator) GenerateChallenge(ctx context.Context, topic string) (challengegen.Challenge, error) {
+	return challengegen.Challenge{
+		Assignment:   "generated " + topic,
+		StartCode:    "start",
+		TestCode:     "test",
+		SolutionCode: "solution",
+		Difficulty:   5,
+		Topics:       []string{topic},
+	}, nil
+}
+
+func TestTopicAttemptGeneratesChallenge(t *testing.T) {
+	f := newFixture(t, false)
+	ctx := context.Background()
+	f.svc.picker = challenge.NewPicker(f.db, fakeGenerator{})
+	f.doDay(t)
+	f.clock = f.clock.AddDate(0, 0, 1)
+
+	attempt, err := f.svc.StartTopicAttempt(ctx, f.user.ID, f.topicIDs[0])
+	if err != nil {
+		t.Fatalf("starting review attempt: %v", err)
+	}
+	if attempt.ChallengeID == f.challengeOf[f.topicIDs[0]].String() {
+		t.Fatal("review should serve a generated challenge, not the intro challenge")
+	}
+	if attempt.Assignment != "generated topic1" {
+		t.Fatalf("expected the generated assignment, got %q", attempt.Assignment)
+	}
+
+	challengeID := uuid.MustParse(attempt.ChallengeID)
+	if _, ok := f.db.Challenges[challengeID]; !ok {
+		t.Fatal("generated challenge was not stored")
+	}
+	linked := false
+	for _, topicID := range f.db.TopicLinks[challengeID] {
+		if topicID == f.topicIDs[0] {
+			linked = true
+		}
+	}
+	if !linked {
+		t.Fatal("generated challenge was not linked to the topic")
 	}
 }

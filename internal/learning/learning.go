@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/fred-bonn/srlcode/internal/challenge"
 	"github.com/fred-bonn/srlcode/internal/database"
 	"github.com/fred-bonn/srlcode/internal/lessons"
 	"github.com/fred-bonn/srlcode/internal/srs"
@@ -30,6 +31,7 @@ var (
 type Service struct {
 	db     database.Querier
 	sched  srs.Scheduler
+	picker *challenge.Picker
 	isTest func(uuid.UUID) bool
 	now    func() time.Time
 
@@ -39,12 +41,12 @@ type Service struct {
 	offset map[uuid.UUID]int
 }
 
-func New(db database.Querier, sched srs.Scheduler, ls []lessons.Lesson, isTest func(uuid.UUID) bool) *Service {
+func New(db database.Querier, sched srs.Scheduler, picker *challenge.Picker, ls []lessons.Lesson, isTest func(uuid.UUID) bool) *Service {
 	byID := make(map[string]lessons.Lesson, len(ls))
 	for _, lesson := range ls {
 		byID[lesson.ID] = lesson
 	}
-	return &Service{db: db, sched: sched, isTest: isTest, now: time.Now, byID: byID, offset: map[uuid.UUID]int{}}
+	return &Service{db: db, sched: sched, picker: picker, isTest: isTest, now: time.Now, byID: byID, offset: map[uuid.UUID]int{}}
 }
 
 type LessonView struct {
@@ -210,6 +212,66 @@ func (s *Service) StartAttempt(ctx context.Context, userID, challengeID uuid.UUI
 		return AttemptView{}, fmt.Errorf("creating attempt: %w", err)
 	}
 	return s.attemptView(ctx, attempt)
+}
+
+// StartTopicAttempt presents a challenge for a topic due today: the
+// lesson's static challenge on first introduction, otherwise a challenge
+// picked by the challenge package. An open attempt for the topic is
+// resumed instead.
+func (s *Service) StartTopicAttempt(ctx context.Context, userID, topicID uuid.UUID) (AttemptView, error) {
+	now := s.userNow(userID)
+	due, err := s.db.ListDueUserTopics(ctx, database.ListDueUserTopicsParams{
+		UserID: userID,
+		DueAt:  endOfDay(now),
+	})
+	if err != nil {
+		return AttemptView{}, fmt.Errorf("listing due topics: %w", err)
+	}
+	isDue := false
+	for _, topic := range due {
+		if topic.ID == topicID {
+			isDue = true
+			break
+		}
+	}
+	if !isDue {
+		return AttemptView{}, ErrNotAssigned
+	}
+
+	open, err := s.db.GetOpenAttemptByTopic(ctx, database.GetOpenAttemptByTopicParams{
+		UserID:  userID,
+		TopicID: topicID,
+	})
+	if err == nil {
+		return s.attemptView(ctx, open)
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return AttemptView{}, fmt.Errorf("loading open attempt: %w", err)
+	}
+
+	// First introduction always serves the lesson's static challenge.
+	lesson, lessonErr := s.db.GetLessonByTopic(ctx, topicID)
+	if lessonErr != nil && !errors.Is(lessonErr, sql.ErrNoRows) {
+		return AttemptView{}, fmt.Errorf("loading lesson: %w", lessonErr)
+	}
+	if lessonErr == nil {
+		history, err := s.db.ListCompletedTopicReviews(ctx, database.ListCompletedTopicReviewsParams{
+			UserID:  userID,
+			TopicID: topicID,
+		})
+		if err != nil {
+			return AttemptView{}, fmt.Errorf("listing review history: %w", err)
+		}
+		if len(history) == 0 {
+			return s.StartAttempt(ctx, userID, lesson.ChallengeID)
+		}
+	}
+
+	challengeID, err := s.picker.ReviewChallenge(ctx, userID, topicID)
+	if err != nil {
+		return AttemptView{}, fmt.Errorf("picking challenge: %w", err)
+	}
+	return s.StartAttempt(ctx, userID, challengeID)
 }
 
 // checkAssigned rejects challenges that are neither the current lesson's

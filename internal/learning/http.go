@@ -23,6 +23,7 @@ func (s *Service) Routes() http.Handler {
 
 type startAttemptRequest struct {
 	ChallengeID string `json:"challenge_id"`
+	TopicID     string `json:"topic_id"`
 }
 
 type saveCodeRequest struct {
@@ -57,21 +58,46 @@ func (s *Service) handleStartAttempt(w http.ResponseWriter, r *http.Request) {
 		httpx.RespondWithError(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
+	if (req.ChallengeID == "") == (req.TopicID == "") {
+		httpx.RespondWithError(w, http.StatusBadRequest, "exactly one of challenge_id or topic_id is required", nil)
+		return
+	}
+	var attempt AttemptView
+	if req.TopicID != "" {
+		topicID, err := uuid.Parse(req.TopicID)
+		if err != nil {
+			httpx.RespondWithError(w, http.StatusBadRequest, "invalid topic_id", nil)
+			return
+		}
+		attempt, err = s.StartTopicAttempt(r.Context(), userID, topicID)
+		if err != nil {
+			respondStartAttemptError(w, err)
+			return
+		}
+		httpx.RespondWithJSON(w, http.StatusCreated, attempt)
+		return
+	}
 	challengeID, err := uuid.Parse(req.ChallengeID)
 	if err != nil {
 		httpx.RespondWithError(w, http.StatusBadRequest, "invalid challenge_id", nil)
 		return
 	}
-	attempt, err := s.StartAttempt(r.Context(), userID, challengeID)
+	attempt, err = s.StartAttempt(r.Context(), userID, challengeID)
+	if err != nil {
+		respondStartAttemptError(w, err)
+		return
+	}
+	httpx.RespondWithJSON(w, http.StatusCreated, attempt)
+}
+
+func respondStartAttemptError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, ErrNotFound):
 		httpx.RespondWithError(w, http.StatusNotFound, err.Error(), nil)
 	case errors.Is(err, ErrNotAssigned):
 		httpx.RespondWithError(w, http.StatusForbidden, err.Error(), nil)
-	case err != nil:
-		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	default:
-		httpx.RespondWithJSON(w, http.StatusCreated, attempt)
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	}
 }
 
