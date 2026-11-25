@@ -40,21 +40,22 @@ func (q *Queries) CompleteAttempt(ctx context.Context, arg CompleteAttemptParams
 }
 
 const completeLesson = `-- name: CompleteLesson :exec
-INSERT INTO user_lessons (user_id, lesson_id) VALUES ($1, $2)
+INSERT INTO user_lessons (user_id, lesson_id, completed_at) VALUES ($1, $2, $3)
 `
 
 type CompleteLessonParams struct {
-	UserID   uuid.UUID
-	LessonID string
+	UserID      uuid.UUID
+	LessonID    string
+	CompletedAt time.Time
 }
 
 func (q *Queries) CompleteLesson(ctx context.Context, arg CompleteLessonParams) error {
-	_, err := q.db.ExecContext(ctx, completeLesson, arg.UserID, arg.LessonID)
+	_, err := q.db.ExecContext(ctx, completeLesson, arg.UserID, arg.LessonID, arg.CompletedAt)
 	return err
 }
 
 const createAttempt = `-- name: CreateAttempt :one
-INSERT INTO user_reviews (user_id, challenge_id, code) VALUES ($1, $2, $3)
+INSERT INTO user_reviews (user_id, challenge_id, code, started_at) VALUES ($1, $2, $3, $4)
 RETURNING id, user_id, challenge_id, code, correct, duration_seconds, started_at, completed_at
 `
 
@@ -62,10 +63,16 @@ type CreateAttemptParams struct {
 	UserID      uuid.UUID
 	ChallengeID uuid.UUID
 	Code        string
+	StartedAt   time.Time
 }
 
 func (q *Queries) CreateAttempt(ctx context.Context, arg CreateAttemptParams) (UserReview, error) {
-	row := q.db.QueryRowContext(ctx, createAttempt, arg.UserID, arg.ChallengeID, arg.Code)
+	row := q.db.QueryRowContext(ctx, createAttempt,
+		arg.UserID,
+		arg.ChallengeID,
+		arg.Code,
+		arg.StartedAt,
+	)
 	var i UserReview
 	err := row.Scan(
 		&i.ID,
@@ -114,6 +121,53 @@ func (q *Queries) GetAttempt(ctx context.Context, id uuid.UUID) (UserReview, err
 		&i.CompletedAt,
 	)
 	return i, err
+}
+
+const getOpenAttemptByChallenge = `-- name: GetOpenAttemptByChallenge :one
+SELECT id, user_id, challenge_id, code, correct, duration_seconds, started_at, completed_at FROM user_reviews
+WHERE user_id = $1 AND challenge_id = $2 AND correct IS NULL
+ORDER BY started_at
+LIMIT 1
+`
+
+type GetOpenAttemptByChallengeParams struct {
+	UserID      uuid.UUID
+	ChallengeID uuid.UUID
+}
+
+func (q *Queries) GetOpenAttemptByChallenge(ctx context.Context, arg GetOpenAttemptByChallengeParams) (UserReview, error) {
+	row := q.db.QueryRowContext(ctx, getOpenAttemptByChallenge, arg.UserID, arg.ChallengeID)
+	var i UserReview
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ChallengeID,
+		&i.Code,
+		&i.Correct,
+		&i.DurationSeconds,
+		&i.StartedAt,
+		&i.CompletedAt,
+	)
+	return i, err
+}
+
+const hasCompletedLessonToday = `-- name: HasCompletedLessonToday :one
+SELECT EXISTS (
+    SELECT 1 FROM user_lessons
+    WHERE user_id = $1 AND completed_at >= $2
+) AS completed
+`
+
+type HasCompletedLessonTodayParams struct {
+	UserID      uuid.UUID
+	CompletedAt time.Time
+}
+
+func (q *Queries) HasCompletedLessonToday(ctx context.Context, arg HasCompletedLessonTodayParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, hasCompletedLessonToday, arg.UserID, arg.CompletedAt)
+	var completed bool
+	err := row.Scan(&completed)
+	return completed, err
 }
 
 const listCompletedTopicReviews = `-- name: ListCompletedTopicReviews :many

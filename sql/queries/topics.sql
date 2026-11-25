@@ -10,5 +10,8 @@ INSERT INTO challenge_topics (challenge_id, topic_id) VALUES ($1, $2);
 INSERT INTO challenge_topics (challenge_id, topic_id) VALUES ($1, $2)
 ON CONFLICT DO NOTHING;
 
+-- name: ListChallengeTopics :many
+SELECT topic_id FROM challenge_topics WHERE challenge_id = $1;
+
 -- name: GetTopicByName :one
 SELECT * FROM topics WHERE name = $1;

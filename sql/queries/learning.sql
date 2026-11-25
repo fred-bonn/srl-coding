@@ -1,5 +1,5 @@
 -- name: CompleteLesson :exec
-INSERT INTO user_lessons (user_id, lesson_id) VALUES ($1, $2);
+INSERT INTO user_lessons (user_id, lesson_id, completed_at) VALUES ($1, $2, $3);
 
 -- name: EnsureUserTopic :exec
 INSERT INTO user_topics (user_id, topic_id, due_at) VALUES ($1, $2, $3)
@@ -16,7 +16,7 @@ UPDATE user_topics SET due_at = $3, updated_at = now()
 WHERE user_id = $1 AND topic_id = $2;
 
 -- name: CreateAttempt :one
-INSERT INTO user_reviews (user_id, challenge_id, code) VALUES ($1, $2, $3)
+INSERT INTO user_reviews (user_id, challenge_id, code, started_at) VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: GetAttempt :one
@@ -43,3 +43,15 @@ FROM user_reviews r
 JOIN challenge_topics ct ON ct.challenge_id = r.challenge_id
 WHERE r.user_id = $1 AND ct.topic_id = $2 AND r.correct IS NOT NULL
 ORDER BY r.completed_at;
+
+-- name: GetOpenAttemptByChallenge :one
+SELECT * FROM user_reviews
+WHERE user_id = $1 AND challenge_id = $2 AND correct IS NULL
+ORDER BY started_at
+LIMIT 1;
+
+-- name: HasCompletedLessonToday :one
+SELECT EXISTS (
+    SELECT 1 FROM user_lessons
+    WHERE user_id = $1 AND completed_at >= $2
+) AS completed;

@@ -73,3 +73,30 @@ func (q *Queries) GetTopicByName(ctx context.Context, name string) (Topic, error
 	)
 	return i, err
 }
+
+const listChallengeTopics = `-- name: ListChallengeTopics :many
+SELECT topic_id FROM challenge_topics WHERE challenge_id = $1
+`
+
+func (q *Queries) ListChallengeTopics(ctx context.Context, challengeID uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.QueryContext(ctx, listChallengeTopics, challengeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var topic_id uuid.UUID
+		if err := rows.Scan(&topic_id); err != nil {
+			return nil, err
+		}
+		items = append(items, topic_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
