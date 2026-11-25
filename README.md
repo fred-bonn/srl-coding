@@ -280,3 +280,22 @@ curl -X POST localhost:8080/lessons/complete \
 # the next lesson immediately)
 curl -s localhost:8080/today -H "Authorization: Bearer $TOKEN"
 ```
+
+## CLI
+
+`cmd/cli` is a thin client for the API above. Point it at a running
+server with `SRL_ADDR` (default `http://localhost:8080`); the session
+token is stored in `SRL_SESSION` (default `~/.config/srlcode/session`).
+
+```bash
+go run ./cmd/cli register me@example.com password123
+go run ./cmd/cli login me@example.com password123
+go run ./cmd/cli today
+go run ./cmd/cli start -topic <topic_id>          # or -challenge <challenge_id>
+go run ./cmd/cli save <attempt_id> solution.py
+go run ./cmd/cli complete <attempt_id> true 120
+go run ./cmd/cli lesson
+go run ./cmd/cli today                            # done, or the next breakpoint
+```
+
+Responses are printed as indented JSON; errors as `status: body`.
