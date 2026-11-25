@@ -46,8 +46,8 @@ list of emails whose accounts jump instantly to the next breakpoint instead
 of waiting for the next calendar day.
 
 Login issues a session token, valid for 30 days. Every learning endpoint
-requires it in the `Authorization` header. Errors are plain text: non-2xx
-responses carry a short message in the body.
+requires it in the `Authorization` header. Errors are JSON: every non-2xx
+response carries `{"error": "<message>"}`.
 
 A day's work is one lesson plus the queue of topics due that day. The
 lesson's topic is introduced into the queue the first time the lesson is

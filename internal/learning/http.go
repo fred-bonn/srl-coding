@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/fred-bonn/srlcode/internal/auth"
+	"github.com/fred-bonn/srlcode/internal/httpx"
 )
 
 func (s *Service) Routes() http.Handler {
@@ -42,7 +43,7 @@ func (s *Service) handleToday(w http.ResponseWriter, r *http.Request) {
 	view, err := s.Today(r.Context(), userID)
 	if err != nil {
 		log.Printf("today: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		httpx.Error(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -56,23 +57,23 @@ func (s *Service) handleStartAttempt(w http.ResponseWriter, r *http.Request) {
 	}
 	var req startAttemptRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		httpx.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	challengeID, err := uuid.Parse(req.ChallengeID)
 	if err != nil {
-		http.Error(w, "invalid challenge_id", http.StatusBadRequest)
+		httpx.Error(w, http.StatusBadRequest, "invalid challenge_id")
 		return
 	}
 	attempt, err := s.StartAttempt(r.Context(), userID, challengeID)
 	switch {
 	case errors.Is(err, ErrNotFound):
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httpx.Error(w, http.StatusNotFound, err.Error())
 	case errors.Is(err, ErrNotAssigned):
-		http.Error(w, err.Error(), http.StatusForbidden)
+		httpx.Error(w, http.StatusForbidden, err.Error())
 	case err != nil:
 		log.Printf("start attempt: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		httpx.Error(w, http.StatusInternalServerError, "internal error")
 	default:
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
@@ -87,23 +88,23 @@ func (s *Service) handleSaveCode(w http.ResponseWriter, r *http.Request) {
 	}
 	attemptID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid attempt id", http.StatusBadRequest)
+		httpx.Error(w, http.StatusBadRequest, "invalid attempt id")
 		return
 	}
 	var req saveCodeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		httpx.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	err = s.SaveCode(r.Context(), userID, attemptID, req.Code)
 	switch {
 	case errors.Is(err, ErrNotFound):
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httpx.Error(w, http.StatusNotFound, err.Error())
 	case errors.Is(err, ErrAttemptClosed):
-		http.Error(w, err.Error(), http.StatusConflict)
+		httpx.Error(w, http.StatusConflict, err.Error())
 	case err != nil:
 		log.Printf("save code: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		httpx.Error(w, http.StatusInternalServerError, "internal error")
 	default:
 		w.WriteHeader(http.StatusNoContent)
 	}
@@ -116,23 +117,23 @@ func (s *Service) handleCompleteAttempt(w http.ResponseWriter, r *http.Request) 
 	}
 	attemptID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "invalid attempt id", http.StatusBadRequest)
+		httpx.Error(w, http.StatusBadRequest, "invalid attempt id")
 		return
 	}
 	var req completeAttemptRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		httpx.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	err = s.CompleteAttempt(r.Context(), userID, attemptID, req.Correct, req.DurationSeconds)
 	switch {
 	case errors.Is(err, ErrNotFound):
-		http.Error(w, err.Error(), http.StatusNotFound)
+		httpx.Error(w, http.StatusNotFound, err.Error())
 	case errors.Is(err, ErrAttemptClosed):
-		http.Error(w, err.Error(), http.StatusConflict)
+		httpx.Error(w, http.StatusConflict, err.Error())
 	case err != nil:
 		log.Printf("complete attempt: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		httpx.Error(w, http.StatusInternalServerError, "internal error")
 	default:
 		w.WriteHeader(http.StatusNoContent)
 	}
@@ -146,10 +147,10 @@ func (s *Service) handleCompleteLesson(w http.ResponseWriter, r *http.Request) {
 	err := s.CompleteLesson(r.Context(), userID)
 	switch {
 	case errors.Is(err, ErrLessonAlreadyDoneToday), errors.Is(err, ErrCurriculumDone):
-		http.Error(w, err.Error(), http.StatusConflict)
+		httpx.Error(w, http.StatusConflict, err.Error())
 	case err != nil:
 		log.Printf("complete lesson: %v", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		httpx.Error(w, http.StatusInternalServerError, "internal error")
 	default:
 		w.WriteHeader(http.StatusNoContent)
 	}
@@ -158,7 +159,7 @@ func (s *Service) handleCompleteLesson(w http.ResponseWriter, r *http.Request) {
 func authenticated(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	user, ok := auth.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthenticated", http.StatusUnauthorized)
+		httpx.Error(w, http.StatusUnauthorized, "unauthenticated")
 		return uuid.UUID{}, false
 	}
 	return user.ID, true
