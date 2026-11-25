@@ -68,6 +68,13 @@ func requireConfig(input any) {
 }
 ```
 
+## Data access
+
+- All database access goes through the sqlc-generated `Querier` interface in
+  `internal/database`. Do not open connections or run raw SQL from domain
+  packages; add a named query in `sql/queries/` and regenerate sqlc instead.
+- Tests use an in-memory fake `Querier`, never a live database.
+
 ## Schema changes and the seed command
 
 - The seed command's data lives in `cmd/seed/data/` — for now a copy of
