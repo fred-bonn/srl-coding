@@ -5,3 +5,10 @@ RETURNING *;
 
 -- name: CreateChallengeTopic :exec
 INSERT INTO challenge_topics (challenge_id, topic_id) VALUES ($1, $2);
+
+-- name: EnsureChallengeTopic :exec
+INSERT INTO challenge_topics (challenge_id, topic_id) VALUES ($1, $2)
+ON CONFLICT DO NOTHING;
+
+-- name: GetTopicByName :one
+SELECT * FROM topics WHERE name = $1;

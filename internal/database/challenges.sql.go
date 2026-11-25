@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createChallenge = `-- name: CreateChallenge :one
@@ -50,4 +52,56 @@ func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams
 		&i.Difficulty,
 	)
 	return i, err
+}
+
+const getChallenge = `-- name: GetChallenge :one
+SELECT id, created_at, updated_at, assignment, start_code, test_code, solution_code, difficulty FROM challenges WHERE id = $1
+`
+
+func (q *Queries) GetChallenge(ctx context.Context, id uuid.UUID) (Challenge, error) {
+	row := q.db.QueryRowContext(ctx, getChallenge, id)
+	var i Challenge
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Assignment,
+		&i.StartCode,
+		&i.TestCode,
+		&i.SolutionCode,
+		&i.Difficulty,
+	)
+	return i, err
+}
+
+const updateChallengeContent = `-- name: UpdateChallengeContent :exec
+UPDATE challenges SET
+    assignment = $2,
+    start_code = $3,
+    test_code = $4,
+    solution_code = $5,
+    difficulty = $6,
+    updated_at = now()
+WHERE id = $1
+`
+
+type UpdateChallengeContentParams struct {
+	ID           uuid.UUID
+	Assignment   string
+	StartCode    string
+	TestCode     string
+	SolutionCode string
+	Difficulty   int32
+}
+
+func (q *Queries) UpdateChallengeContent(ctx context.Context, arg UpdateChallengeContentParams) error {
+	_, err := q.db.ExecContext(ctx, updateChallengeContent,
+		arg.ID,
+		arg.Assignment,
+		arg.StartCode,
+		arg.TestCode,
+		arg.SolutionCode,
+		arg.Difficulty,
+	)
+	return err
 }

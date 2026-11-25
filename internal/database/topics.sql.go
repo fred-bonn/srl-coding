@@ -42,3 +42,34 @@ func (q *Queries) CreateTopic(ctx context.Context, name string) (Topic, error) {
 	)
 	return i, err
 }
+
+const ensureChallengeTopic = `-- name: EnsureChallengeTopic :exec
+INSERT INTO challenge_topics (challenge_id, topic_id) VALUES ($1, $2)
+ON CONFLICT DO NOTHING
+`
+
+type EnsureChallengeTopicParams struct {
+	ChallengeID uuid.UUID
+	TopicID     uuid.UUID
+}
+
+func (q *Queries) EnsureChallengeTopic(ctx context.Context, arg EnsureChallengeTopicParams) error {
+	_, err := q.db.ExecContext(ctx, ensureChallengeTopic, arg.ChallengeID, arg.TopicID)
+	return err
+}
+
+const getTopicByName = `-- name: GetTopicByName :one
+SELECT id, created_at, updated_at, name FROM topics WHERE name = $1
+`
+
+func (q *Queries) GetTopicByName(ctx context.Context, name string) (Topic, error) {
+	row := q.db.QueryRowContext(ctx, getTopicByName, name)
+	var i Topic
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+	)
+	return i, err
+}

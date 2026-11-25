@@ -6,15 +6,35 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
+	CompleteAttempt(ctx context.Context, arg CompleteAttemptParams) (int64, error)
+	CompleteLesson(ctx context.Context, arg CompleteLessonParams) error
+	CreateAttempt(ctx context.Context, arg CreateAttemptParams) (UserReview, error)
 	CreateAuthSession(ctx context.Context, arg CreateAuthSessionParams) error
 	CreateChallenge(ctx context.Context, arg CreateChallengeParams) (Challenge, error)
 	CreateChallengeTopic(ctx context.Context, arg CreateChallengeTopicParams) error
+	CreateLesson(ctx context.Context, arg CreateLessonParams) error
 	CreateTopic(ctx context.Context, name string) (Topic, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	EnsureChallengeTopic(ctx context.Context, arg EnsureChallengeTopicParams) error
+	EnsureUserTopic(ctx context.Context, arg EnsureUserTopicParams) error
+	GetAttempt(ctx context.Context, id uuid.UUID) (UserReview, error)
+	GetChallenge(ctx context.Context, id uuid.UUID) (Challenge, error)
+	GetCurrentLesson(ctx context.Context, userID uuid.UUID) (Lesson, error)
+	GetLesson(ctx context.Context, id string) (Lesson, error)
+	GetTopicByName(ctx context.Context, name string) (Topic, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserBySessionToken(ctx context.Context, token string) (User, error)
+	ListCompletedTopicReviews(ctx context.Context, arg ListCompletedTopicReviewsParams) ([]ListCompletedTopicReviewsRow, error)
+	ListDueUserTopics(ctx context.Context, arg ListDueUserTopicsParams) ([]ListDueUserTopicsRow, error)
+	ListOpenAttempts(ctx context.Context, userID uuid.UUID) ([]ListOpenAttemptsRow, error)
+	SaveAttemptCode(ctx context.Context, arg SaveAttemptCodeParams) (int64, error)
+	SetUserTopicDue(ctx context.Context, arg SetUserTopicDueParams) error
+	UpdateChallengeContent(ctx context.Context, arg UpdateChallengeContentParams) error
 }
 
 var _ Querier = (*Queries)(nil)

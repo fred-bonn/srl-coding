@@ -34,6 +34,13 @@ type ChallengeTopic struct {
 	TopicID     uuid.UUID
 }
 
+type Lesson struct {
+	ID           string
+	LessonNumber int32
+	TopicID      uuid.UUID
+	ChallengeID  uuid.UUID
+}
+
 type Topic struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
@@ -50,9 +57,9 @@ type User struct {
 }
 
 type UserLesson struct {
-	UserID       uuid.UUID
-	LessonNumber int32
-	CompletedAt  time.Time
+	UserID      uuid.UUID
+	LessonID    string
+	CompletedAt time.Time
 }
 
 type UserReview struct {
@@ -63,6 +70,7 @@ type UserReview struct {
 	Correct         sql.NullBool
 	DurationSeconds sql.NullInt32
 	StartedAt       time.Time
+	CompletedAt     sql.NullTime
 }
 
 type UserTopic struct {
