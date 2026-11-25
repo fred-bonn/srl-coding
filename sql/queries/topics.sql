@@ -15,3 +15,6 @@ SELECT topic_id FROM challenge_topics WHERE challenge_id = $1;
 
 -- name: GetTopicByName :one
 SELECT * FROM topics WHERE name = $1;
+
+-- name: GetTopic :one
+SELECT * FROM topics WHERE id = $1;

@@ -50,6 +50,13 @@ WHERE user_id = $1 AND challenge_id = $2 AND correct IS NULL
 ORDER BY started_at
 LIMIT 1;
 
+-- name: GetOpenAttemptByTopic :one
+SELECT r.* FROM user_reviews r
+JOIN challenge_topics ct ON ct.challenge_id = r.challenge_id
+WHERE r.user_id = $1 AND ct.topic_id = $2 AND r.correct IS NULL
+ORDER BY r.started_at
+LIMIT 1;
+
 -- name: HasCompletedLessonToday :one
 SELECT EXISTS (
     SELECT 1 FROM user_lessons

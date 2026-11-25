@@ -151,6 +151,35 @@ func (q *Queries) GetOpenAttemptByChallenge(ctx context.Context, arg GetOpenAtte
 	return i, err
 }
 
+const getOpenAttemptByTopic = `-- name: GetOpenAttemptByTopic :one
+SELECT r.id, r.user_id, r.challenge_id, r.code, r.correct, r.duration_seconds, r.started_at, r.completed_at FROM user_reviews r
+JOIN challenge_topics ct ON ct.challenge_id = r.challenge_id
+WHERE r.user_id = $1 AND ct.topic_id = $2 AND r.correct IS NULL
+ORDER BY r.started_at
+LIMIT 1
+`
+
+type GetOpenAttemptByTopicParams struct {
+	UserID  uuid.UUID
+	TopicID uuid.UUID
+}
+
+func (q *Queries) GetOpenAttemptByTopic(ctx context.Context, arg GetOpenAttemptByTopicParams) (UserReview, error) {
+	row := q.db.QueryRowContext(ctx, getOpenAttemptByTopic, arg.UserID, arg.TopicID)
+	var i UserReview
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ChallengeID,
+		&i.Code,
+		&i.Correct,
+		&i.DurationSeconds,
+		&i.StartedAt,
+		&i.CompletedAt,
+	)
+	return i, err
+}
+
 const hasCompletedLessonToday = `-- name: HasCompletedLessonToday :one
 SELECT EXISTS (
     SELECT 1 FROM user_lessons

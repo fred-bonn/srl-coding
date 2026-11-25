@@ -58,6 +58,22 @@ func (q *Queries) EnsureChallengeTopic(ctx context.Context, arg EnsureChallengeT
 	return err
 }
 
+const getTopic = `-- name: GetTopic :one
+SELECT id, created_at, updated_at, name FROM topics WHERE id = $1
+`
+
+func (q *Queries) GetTopic(ctx context.Context, id uuid.UUID) (Topic, error) {
+	row := q.db.QueryRowContext(ctx, getTopic, id)
+	var i Topic
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+	)
+	return i, err
+}
+
 const getTopicByName = `-- name: GetTopicByName :one
 SELECT id, created_at, updated_at, name FROM topics WHERE name = $1
 `

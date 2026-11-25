@@ -12,3 +12,6 @@ WHERE NOT EXISTS (
 )
 ORDER BY l.lesson_number
 LIMIT 1;
+
+-- name: GetLessonByTopic :one
+SELECT * FROM lessons WHERE topic_id = $1;

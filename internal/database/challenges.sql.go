@@ -74,6 +74,88 @@ func (q *Queries) GetChallenge(ctx context.Context, id uuid.UUID) (Challenge, er
 	return i, err
 }
 
+const listChallengesForTopic = `-- name: ListChallengesForTopic :many
+SELECT c.id, c.created_at, c.updated_at, c.assignment, c.start_code, c.test_code, c.solution_code, c.difficulty FROM challenges c
+JOIN challenge_topics ct ON ct.challenge_id = c.id
+WHERE ct.topic_id = $1
+`
+
+func (q *Queries) ListChallengesForTopic(ctx context.Context, topicID uuid.UUID) ([]Challenge, error) {
+	rows, err := q.db.QueryContext(ctx, listChallengesForTopic, topicID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Challenge
+	for rows.Next() {
+		var i Challenge
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Assignment,
+			&i.StartCode,
+			&i.TestCode,
+			&i.SolutionCode,
+			&i.Difficulty,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUnseenChallengesForTopic = `-- name: ListUnseenChallengesForTopic :many
+SELECT c.id, c.created_at, c.updated_at, c.assignment, c.start_code, c.test_code, c.solution_code, c.difficulty FROM challenges c
+JOIN challenge_topics ct ON ct.challenge_id = c.id
+LEFT JOIN user_reviews ur ON ur.challenge_id = c.id AND ur.user_id = $1
+WHERE ct.topic_id = $2 AND ur.id IS NULL
+`
+
+type ListUnseenChallengesForTopicParams struct {
+	UserID  uuid.UUID
+	TopicID uuid.UUID
+}
+
+func (q *Queries) ListUnseenChallengesForTopic(ctx context.Context, arg ListUnseenChallengesForTopicParams) ([]Challenge, error) {
+	rows, err := q.db.QueryContext(ctx, listUnseenChallengesForTopic, arg.UserID, arg.TopicID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Challenge
+	for rows.Next() {
+		var i Challenge
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Assignment,
+			&i.StartCode,
+			&i.TestCode,
+			&i.SolutionCode,
+			&i.Difficulty,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateChallengeContent = `-- name: UpdateChallengeContent :exec
 UPDATE challenges SET
     assignment = $2,

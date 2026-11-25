@@ -356,6 +356,74 @@ func (d *DB) UpdateChallengeContent(ctx context.Context, arg database.UpdateChal
 	return nil
 }
 
+func (d *DB) GetLessonByTopic(ctx context.Context, topicID uuid.UUID) (database.Lesson, error) {
+	for _, lesson := range d.Lessons {
+		if lesson.TopicID == topicID {
+			return lesson, nil
+		}
+	}
+	return database.Lesson{}, sql.ErrNoRows
+}
+
+func (d *DB) GetTopic(ctx context.Context, id uuid.UUID) (database.Topic, error) {
+	topic, ok := d.Topics[id]
+	if !ok {
+		return database.Topic{}, sql.ErrNoRows
+	}
+	return topic, nil
+}
+
+func (d *DB) ListChallengesForTopic(ctx context.Context, topicID uuid.UUID) ([]database.Challenge, error) {
+	var challenges []database.Challenge
+	for challengeID := range d.TopicLinks {
+		if !d.challengeHasTopic(challengeID, topicID) {
+			continue
+		}
+		challenges = append(challenges, d.Challenges[challengeID])
+	}
+	return challenges, nil
+}
+
+func (d *DB) ListUnseenChallengesForTopic(ctx context.Context, arg database.ListUnseenChallengesForTopicParams) ([]database.Challenge, error) {
+	var unseen []database.Challenge
+	for challengeID := range d.TopicLinks {
+		if !d.challengeHasTopic(challengeID, arg.TopicID) {
+			continue
+		}
+		attempted := false
+		for _, attempt := range d.Attempts {
+			if attempt.UserID == arg.UserID && attempt.ChallengeID == challengeID {
+				attempted = true
+				break
+			}
+		}
+		if !attempted {
+			unseen = append(unseen, d.Challenges[challengeID])
+		}
+	}
+	return unseen, nil
+}
+
+func (d *DB) GetOpenAttemptByTopic(ctx context.Context, arg database.GetOpenAttemptByTopicParams) (database.UserReview, error) {
+	var open database.UserReview
+	found := false
+	for _, attempt := range d.Attempts {
+		if attempt.UserID != arg.UserID || attempt.Correct.Valid {
+			continue
+		}
+		if !d.challengeHasTopic(attempt.ChallengeID, arg.TopicID) {
+			continue
+		}
+		if !found || attempt.StartedAt.Before(open.StartedAt) {
+			open, found = attempt, true
+		}
+	}
+	if !found {
+		return database.UserReview{}, sql.ErrNoRows
+	}
+	return open, nil
+}
+
 func (d *DB) hasCompletedLesson(userID uuid.UUID, lessonID string) bool {
 	for _, ul := range d.UserLessons {
 		if ul.UserID == userID && ul.LessonID == lessonID {

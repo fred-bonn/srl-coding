@@ -69,3 +69,19 @@ func (q *Queries) GetLesson(ctx context.Context, id string) (Lesson, error) {
 	)
 	return i, err
 }
+
+const getLessonByTopic = `-- name: GetLessonByTopic :one
+SELECT id, lesson_number, topic_id, challenge_id FROM lessons WHERE topic_id = $1
+`
+
+func (q *Queries) GetLessonByTopic(ctx context.Context, topicID uuid.UUID) (Lesson, error) {
+	row := q.db.QueryRowContext(ctx, getLessonByTopic, topicID)
+	var i Lesson
+	err := row.Scan(
+		&i.ID,
+		&i.LessonNumber,
+		&i.TopicID,
+		&i.ChallengeID,
+	)
+	return i, err
+}
