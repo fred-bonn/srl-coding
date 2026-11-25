@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"strings"
 
@@ -49,12 +48,12 @@ func (s *Service) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if token == "" {
-			httpx.Error(w, http.StatusUnauthorized, "missing session token")
+			httpx.RespondWithError(w, http.StatusUnauthorized, "missing session token", nil)
 			return
 		}
 		user, err := s.db.GetUserBySessionToken(r.Context(), token)
 		if err != nil {
-			httpx.Error(w, http.StatusUnauthorized, "invalid or expired session token")
+			httpx.RespondWithError(w, http.StatusUnauthorized, "invalid or expired session token", err)
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextKey{}, user)))
@@ -69,16 +68,13 @@ func (s *Service) handleRegister(w http.ResponseWriter, r *http.Request) {
 	user, err := s.Register(r.Context(), creds.Email, creds.Password)
 	switch {
 	case errors.Is(err, ErrEmailTaken):
-		httpx.Error(w, http.StatusConflict, err.Error())
+		httpx.RespondWithError(w, http.StatusConflict, err.Error(), nil)
 	case errors.Is(err, ErrInvalidEmail), errors.Is(err, ErrWeakPassword):
-		httpx.Error(w, http.StatusBadRequest, err.Error())
+		httpx.RespondWithError(w, http.StatusBadRequest, err.Error(), nil)
 	case err != nil:
-		log.Printf("register: %v", err)
-		httpx.Error(w, http.StatusInternalServerError, "internal error")
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	default:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(registerResponse{ID: user.ID, Email: user.Email})
+		httpx.RespondWithJSON(w, http.StatusCreated, registerResponse{ID: user.ID, Email: user.Email})
 	}
 }
 
@@ -90,21 +86,18 @@ func (s *Service) handleLogin(w http.ResponseWriter, r *http.Request) {
 	token, err := s.Login(r.Context(), creds.Email, creds.Password)
 	switch {
 	case errors.Is(err, ErrInvalidCredentials):
-		httpx.Error(w, http.StatusUnauthorized, err.Error())
+		httpx.RespondWithError(w, http.StatusUnauthorized, err.Error(), nil)
 	case err != nil:
-		log.Printf("login: %v", err)
-		httpx.Error(w, http.StatusInternalServerError, "internal error")
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	default:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(loginResponse{Token: token})
+		httpx.RespondWithJSON(w, http.StatusOK, loginResponse{Token: token})
 	}
 }
 
 func decodeCredentials(w http.ResponseWriter, r *http.Request) (credentials, bool) {
 	var creds credentials
 	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		httpx.Error(w, http.StatusBadRequest, "invalid request body")
+		httpx.RespondWithError(w, http.StatusBadRequest, "invalid request body", nil)
 		return creds, false
 	}
 	return creds, true

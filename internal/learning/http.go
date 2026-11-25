@@ -3,7 +3,6 @@ package learning
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -42,12 +41,10 @@ func (s *Service) handleToday(w http.ResponseWriter, r *http.Request) {
 	}
 	view, err := s.Today(r.Context(), userID)
 	if err != nil {
-		log.Printf("today: %v", err)
-		httpx.Error(w, http.StatusInternalServerError, "internal error")
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(view)
+	httpx.RespondWithJSON(w, http.StatusOK, view)
 }
 
 func (s *Service) handleStartAttempt(w http.ResponseWriter, r *http.Request) {
@@ -57,27 +54,24 @@ func (s *Service) handleStartAttempt(w http.ResponseWriter, r *http.Request) {
 	}
 	var req startAttemptRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpx.Error(w, http.StatusBadRequest, "invalid request body")
+		httpx.RespondWithError(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
 	challengeID, err := uuid.Parse(req.ChallengeID)
 	if err != nil {
-		httpx.Error(w, http.StatusBadRequest, "invalid challenge_id")
+		httpx.RespondWithError(w, http.StatusBadRequest, "invalid challenge_id", nil)
 		return
 	}
 	attempt, err := s.StartAttempt(r.Context(), userID, challengeID)
 	switch {
 	case errors.Is(err, ErrNotFound):
-		httpx.Error(w, http.StatusNotFound, err.Error())
+		httpx.RespondWithError(w, http.StatusNotFound, err.Error(), nil)
 	case errors.Is(err, ErrNotAssigned):
-		httpx.Error(w, http.StatusForbidden, err.Error())
+		httpx.RespondWithError(w, http.StatusForbidden, err.Error(), nil)
 	case err != nil:
-		log.Printf("start attempt: %v", err)
-		httpx.Error(w, http.StatusInternalServerError, "internal error")
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	default:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(attempt)
+		httpx.RespondWithJSON(w, http.StatusCreated, attempt)
 	}
 }
 
@@ -88,23 +82,22 @@ func (s *Service) handleSaveCode(w http.ResponseWriter, r *http.Request) {
 	}
 	attemptID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		httpx.Error(w, http.StatusBadRequest, "invalid attempt id")
+		httpx.RespondWithError(w, http.StatusBadRequest, "invalid attempt id", nil)
 		return
 	}
 	var req saveCodeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpx.Error(w, http.StatusBadRequest, "invalid request body")
+		httpx.RespondWithError(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
 	err = s.SaveCode(r.Context(), userID, attemptID, req.Code)
 	switch {
 	case errors.Is(err, ErrNotFound):
-		httpx.Error(w, http.StatusNotFound, err.Error())
+		httpx.RespondWithError(w, http.StatusNotFound, err.Error(), nil)
 	case errors.Is(err, ErrAttemptClosed):
-		httpx.Error(w, http.StatusConflict, err.Error())
+		httpx.RespondWithError(w, http.StatusConflict, err.Error(), nil)
 	case err != nil:
-		log.Printf("save code: %v", err)
-		httpx.Error(w, http.StatusInternalServerError, "internal error")
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	default:
 		w.WriteHeader(http.StatusNoContent)
 	}
@@ -117,23 +110,22 @@ func (s *Service) handleCompleteAttempt(w http.ResponseWriter, r *http.Request) 
 	}
 	attemptID, err := uuid.Parse(r.PathValue("id"))
 	if err != nil {
-		httpx.Error(w, http.StatusBadRequest, "invalid attempt id")
+		httpx.RespondWithError(w, http.StatusBadRequest, "invalid attempt id", nil)
 		return
 	}
 	var req completeAttemptRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httpx.Error(w, http.StatusBadRequest, "invalid request body")
+		httpx.RespondWithError(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
 	err = s.CompleteAttempt(r.Context(), userID, attemptID, req.Correct, req.DurationSeconds)
 	switch {
 	case errors.Is(err, ErrNotFound):
-		httpx.Error(w, http.StatusNotFound, err.Error())
+		httpx.RespondWithError(w, http.StatusNotFound, err.Error(), nil)
 	case errors.Is(err, ErrAttemptClosed):
-		httpx.Error(w, http.StatusConflict, err.Error())
+		httpx.RespondWithError(w, http.StatusConflict, err.Error(), nil)
 	case err != nil:
-		log.Printf("complete attempt: %v", err)
-		httpx.Error(w, http.StatusInternalServerError, "internal error")
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	default:
 		w.WriteHeader(http.StatusNoContent)
 	}
@@ -147,10 +139,9 @@ func (s *Service) handleCompleteLesson(w http.ResponseWriter, r *http.Request) {
 	err := s.CompleteLesson(r.Context(), userID)
 	switch {
 	case errors.Is(err, ErrLessonAlreadyDoneToday), errors.Is(err, ErrCurriculumDone):
-		httpx.Error(w, http.StatusConflict, err.Error())
+		httpx.RespondWithError(w, http.StatusConflict, err.Error(), nil)
 	case err != nil:
-		log.Printf("complete lesson: %v", err)
-		httpx.Error(w, http.StatusInternalServerError, "internal error")
+		httpx.RespondWithError(w, http.StatusInternalServerError, "internal error", err)
 	default:
 		w.WriteHeader(http.StatusNoContent)
 	}
@@ -159,7 +150,7 @@ func (s *Service) handleCompleteLesson(w http.ResponseWriter, r *http.Request) {
 func authenticated(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	user, ok := auth.UserFromContext(r.Context())
 	if !ok {
-		httpx.Error(w, http.StatusUnauthorized, "unauthenticated")
+		httpx.RespondWithError(w, http.StatusUnauthorized, "unauthenticated", nil)
 		return uuid.UUID{}, false
 	}
 	return user.ID, true
