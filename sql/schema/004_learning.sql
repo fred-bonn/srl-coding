@@ -22,7 +22,8 @@ CREATE TABLE user_reviews (
     code TEXT NOT NULL,
     correct BOOLEAN,
     duration_seconds INT,
-    started_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    completed_at TIMESTAMPTZ
 );
 
 -- +goose Down
