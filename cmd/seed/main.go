@@ -44,7 +44,7 @@ func seed(db *sql.DB) error {
 	}
 	defer tx.Rollback()
 
-	if _, err := tx.ExecContext(ctx, "TRUNCATE TABLE challenges, topics, challenge_topics RESTART IDENTITY CASCADE"); err != nil {
+	if _, err := tx.ExecContext(ctx, "TRUNCATE TABLE user_reviews, user_lessons, user_topics, auth_sessions, users, challenges, topics, challenge_topics RESTART IDENTITY CASCADE"); err != nil {
 		return fmt.Errorf("truncating tables: %w", err)
 	}
 
