@@ -1,6 +1,7 @@
 {
-    "difficulty": 1,
+    "difficulty": 2,
     "topics": [
-        "string-formatting"
+        "string-formatting",
+        "parameters"
     ]
 }
