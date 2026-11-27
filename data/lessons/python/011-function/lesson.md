@@ -1,8 +1,8 @@
 # Functions
 
 A function is a named block of code that we can run whenever we like.
-We have been calling functions all along: `print`, `int`, and `float` are all functions someone else wrote for us.
-Now we write our own.
+For example, `print` is a built-in function available to us in Python.
+Now we get to write our own functions.
 
 ## Example
 
@@ -50,7 +50,7 @@ More often, we want a call to *evaluate to a value*, so we can store it in a var
 The `return` statement ends the function and makes the call evaluate to the value written after it:
 
 ```python
-def hello_world() -> str:
+def hello_world():
     return "Hello, World!"
 
 
@@ -65,13 +65,8 @@ Hello, World!
 ```
 
 The call `hello_world()` evaluates to the string `"Hello, World!"`, and the assignment stores that value in `message`.
-Nothing is printed inside the function: it only produces the value, and we decide where and when to print it.
 
-The `-> str` after the parentheses is a *type annotation*: a promise to the reader that this function evaluates to a string.
-Python does not check the promise; it is documentation, like a comment.
-
-A function that never runs a `return` statement still evaluates to a value.
-It evaluates to `None`, the "no value" value we already know:
+A function that does not return a value will default to returning the `None` value:
 
 ```python
 def greet():
@@ -91,7 +86,9 @@ None
 
 ## Assignments
 
-From this lesson on, we no longer write whole programs.
-Assignments ask us to implement a function, and the starter code already has its name and a `pass` body to replace.
-The tests import our code and call our function directly, checking the value it evaluates to.
+In this lesson we introduce a new assignment format.
+We are now asking you to implement a single function.
+The starter code already has the function you need to implement as a *stub*, which means that it returns `None`.
+A Python function that doesn't return any value will default to returning `None`.
+The tests import your code and call your function directly, checking the value it evaluates to.
 When an assignment is about printing, they check the printed output instead.
