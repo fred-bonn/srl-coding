@@ -20,12 +20,11 @@ Output:
 
 The value is rounded to the two digits it shows.
 
-Other format specifiers exist, far more than we need here.
-Whenever we want more control, the Python documentation lists them all.
+Many other format specifiers exist, which can be seen [here](https://docs.python.org/3/library/string.html#format-string-syntax).
 
 ## Width
 
-A number in front of the dot sets the minimum width of the rendered value.
+An expression in front of the dot sets the minimum width of the rendered value.
 If the value is shorter, it is padded on the left with spaces:
 
 ```python
@@ -40,29 +39,10 @@ Output:
     49.90
 ```
 
-Numbers are right-aligned by default: the padding goes on the left.
-That is exactly what we want when stacking numbers in a column, because their right edges, and their decimal points, line up:
-
-```python
-large = 149.95
-small = 49.901
-print(f"{large:6.2f}")
-print(f"{small:6.2f}")
-```
-
-Output:
-
-```
-149.95
- 49.90
-```
-
-Both lines are six characters wide, so the decimal points sit in the same column.
-
 ## Newlines
 
-The column above needed two `print` calls, one line per call.
-A single string can hold several lines: `\n` is a newline character, and it ends the current line and starts a new one.
+The example above needed two `print` calls.
+We can do this in a single `print` call using the newline character `\n`:
 
 ```python
 print("149.95\n 49.90")
@@ -75,23 +55,7 @@ Output:
  49.90
 ```
 
-`\n` counts as one character, written as a backslash and an `n`.
-It can appear any number of times inside a string, f-strings included.
-
-## A Width From a Variable
-
-Any part of a format specifier can be a replacement field of its own, so the width can come from a variable:
-
-```python
-width = 9
-print(f"{price:{width}.2f}")
-```
-
-Output:
-
-```
-    49.90
-```
+## Helper Functions
 
 In the assignment the two amounts must share one width.
 The starter code provides a helper, `decimal_width`, that evaluates to it:
